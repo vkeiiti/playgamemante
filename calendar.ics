@@ -3,14 +3,27 @@ VERSION:2.0
 PRODID:-//Game Maintenance Calendar//JP//
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:NTE + エンドフィールド + 原神 + スタレ + ステ
- ラソラ + ドルウェブ + ブルアカ + NIKKE + 鳴潮
+X-WR-CALNAME:ゲーム メンテナンス
 X-WR-TIMEZONE:Asia/Tokyo
 BEGIN:VEVENT
-UID:96db2b7b7246e045cae31d63@game-maintenance-calendar
-DTSTAMP:20260922T232213Z
-DTSTART:20260916T010000Z
-DTEND:20260916T130000Z
+UID:704d0602a9fbcdf85ed0555e01593253e948aaa6@game-maintenance-calendar
+DTSTAMP:20260922T233148Z
+DTSTART:20260908T220000Z
+DTEND:20260909T030000Z
+SUMMARY:NTE メンテナンス
+DESCRIPTION:公式告知: 2026年9月9日 メンテナンスのお知らせ
+ \nhttps://nte.perfectworld.com/jp/article/news/gamenews/20260908/263946.ht
+ ml
+URL:https://nte.perfectworld.com/jp/article/news/gamenews/20260908/263946.h
+ tml
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:96db2b7b7246e045cae31d633fed924e3b6245bd@game-maintenance-calendar
+DTSTAMP:20260922T233148Z
+DTSTART:20260915T160000Z
+DTEND:20260916T040000Z
 SUMMARY:NTE メンテナンス
 DESCRIPTION:公式告知: 9月16日Asia＆SEAサーバーメンテナンス
  によるサービス一時停止のお知らせ\nhttps://nte.perfectworld
