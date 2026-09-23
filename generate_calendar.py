@@ -136,11 +136,26 @@ def clean_html(html: str):
     return text, soup
 
 def page_title(soup: BeautifulSoup) -> str:
+    # Prefer metadata/browser title. Some game sites put only a generic
+    # site name in H1, which caused v6 to reject valid maintenance articles.
+    for attrs in (
+        {"property": "og:title"},
+        {"name": "twitter:title"},
+    ):
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            s = re.sub(r"\s+", " ", tag["content"]).strip()
+            if s:
+                return s
+    if soup.title:
+        s = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+        if s:
+            return s
     for tag in soup.find_all(["h1", "h2"], limit=8):
         s = re.sub(r"\s+", " ", tag.get_text(" ", strip=True))
         if s:
             return s
-    return soup.title.get_text(" ", strip=True) if soup.title else ""
+    return ""
 
 def same_domain(url: str, domains: tuple[str, ...]) -> bool:
     host = urlparse(url).netloc.lower()
@@ -257,6 +272,18 @@ def explicit_parser(text: str, tz):
     out = []
     for w in after_labels(text):
         out.extend(ranges(w, tz))
+
+    # Narrow fallback: "maintenance" must still be immediately associated
+    # with a date/time range. This handles labels such as
+    # "メンテナンス実施日時：" and English punctuation variants.
+    if not out:
+        for m in re.finditer(
+            r"(?:メンテナンス|maintenance)[^\n]{0,1000}",
+            text, re.I
+        ):
+            snippet = m.group(0)
+            out.extend(ranges(snippet, tz))
+
     return list(dict.fromkeys(out))
 
 # ---- Individual parsers ----
@@ -325,13 +352,26 @@ PARSERS = {
     "wutheringwaves": parse_wutheringwaves,
 }
 
-def is_article_candidate(title: str, text: str) -> bool:
-    # Title is weighted heavily. This prevents event/news pages containing
-    # the word "maintenance" in a footer from being parsed.
+def is_article_candidate(title: str, text: str, url: str, game: Game) -> bool:
+    # Candidate selection is deliberately different from parsing.
+    # For known article URL patterns we inspect the whole article even if the
+    # visible H1/title is generic. The actual parser still requires an
+    # explicit maintenance-time label, so ordinary event periods are ignored.
     if MAINT_TITLE.search(title):
         return True
-    head = text[:2500]
-    return bool(MAINT_TITLE.search(head))
+
+    path = urlparse(url).path.lower()
+    article_like = (
+        "/article/" in path or
+        "/news/" in path or
+        "/gamenews/" in path or
+        "/announcement/" in path or
+        "/notice/" in path
+    )
+    if article_like:
+        return True
+
+    return bool(MAINT_TITLE.search(text[:3500]))
 
 def make_event(game: Game, url: str, start, end, title: str):
     uid = hashlib.sha256(
@@ -348,6 +388,7 @@ def make_event(game: Game, url: str, start, end, title: str):
 
 def scrape(game: Game):
     urls, index_count = discover(game)
+    urls = sorted(set(urls).union(game.indexes))
     parser = PARSERS[game.parser]
     events = []
     candidate_count = 0
@@ -365,7 +406,7 @@ def scrape(game: Game):
             text, soup = clean_html(html)
             title = page_title(soup)
 
-            if not is_article_candidate(title, text):
+            if not is_article_candidate(title, text, url, game):
                 continue
 
             candidate_count += 1
