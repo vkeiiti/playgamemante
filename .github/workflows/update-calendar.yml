@@ -34,6 +34,13 @@ jobs:
         run: |
           git config user.name "game-maintenance-calendar-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ ! -f calendar.ics ]; then
+            echo "calendar.ics was not generated because no safe events were found."
+            echo "Keeping the existing calendar unchanged."
+            exit 0
+          fi
+
           git add calendar.ics
           if git diff --cached --quiet; then
             echo "No calendar changes."
